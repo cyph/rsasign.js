@@ -11,21 +11,22 @@ all:
 	bash -c ' \
 		args="$$(echo " \
 			--memory-init-file 0 \
+			-DOPENSSL_FIPS \
 			-s TOTAL_MEMORY=104900000 -s TOTAL_STACK=52443072 \
 			-s NO_DYNAMIC_EXECUTION=1 -s RUNNING_JS_OPTS=1 -s ASSERTIONS=0 \
 			-s AGGRESSIVE_VARIABLE_ELIMINATION=1 -s ALIASING_FUNCTION_POINTERS=1 \
 			-s FUNCTION_POINTER_ALIGNMENT=1 -s DISABLE_EXCEPTION_CATCHING=1 \
 			 -s RESERVED_FUNCTION_POINTERS=8 -s NO_FILESYSTEM=1 \
 			-Ilibsodium/src/libsodium/include/sodium \
-			-Iopenssl/include \
+			-Iopenssl -Iopenssl/include -Iopenssl/crypto \
 			libsodium/src/libsodium/randombytes/randombytes.c \
-			$$(find openssl/crypto/rsa -name '"'"'*.c'"'"' -type f) \
+			openssl/crypto/rsa/rsa_sign.c \
 			rsasign.c \
 			-s EXPORTED_FUNCTIONS=\"[ \
-				'"'"'_randombytes_stir'"'"', \
-				'"'"'_crypto_sign_rsasign_keypair'"'"', \
-				'"'"'_crypto_sign_rsasign'"'"', \
-				'"'"'_crypto_sign_rsasign_open'"'"', \
+				'"'"'_rsasignjs_init'"'"', \
+				'"'"'_rsasignjs_keypair'"'"', \
+				'"'"'_rsasignjs_sign'"'"', \
+				'"'"'_rsasignjs_verify'"'"', \
 				'"'"'_rsasignjs_public_key_bytes'"'"', \
 				'"'"'_rsasignjs_secret_key_bytes'"'"', \
 				'"'"'_rsasignjs_signature_bytes'"'"' \

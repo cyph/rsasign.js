@@ -23,7 +23,7 @@ function dataFree (buffer) {
 }
 
 
-Module._randombytes_stir();
+Module._rsasignjs_init();
 
 
 var rsaSign	= {
@@ -36,7 +36,7 @@ var rsaSign	= {
 		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyLength);
 
 		try {
-			var returnValue	= Module._crypto_sign_rsasignjs_keypair(
+			var returnValue	= Module._rsasignjs_keypair(
 				publicKeyBuffer,
 				privateKeyBuffer
 			);
@@ -53,9 +53,15 @@ var rsaSign	= {
 	},
 
 	sign: function (message, privateKey) {
-		var signedLength		= message.length + rsaSign.signatureLength;
+		var signature	= rsaSign.signDetached(message, privateKey);
+		var signed		= new Uint8Array(rsaSign.signatureLength + message.length);
+		signed.set(signature);
+		signed.set(message, rsaSign.signatureLength);
+		return signed;
+	},
 
-		var signedBuffer		= Module._malloc(signedLength);
+	signDetached: function (message, privateKey) {
+		var signatureBuffer		= Module._malloc(rsaSign.signatureLength);
 		var messageBuffer		= Module._malloc(message.length);
 		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyLength);
 
@@ -63,73 +69,58 @@ var rsaSign	= {
 		Module.writeArrayToMemory(privateKey, privateKeyBuffer);
 
 		try {
-			var returnValue	= Module._crypto_sign_rsaSign(
-				signedBuffer,
-				0,
+			var returnValue	= Module._rsasignjs_sign(
+				signatureBuffer,
 				messageBuffer,
 				message.length,
 				privateKeyBuffer
 			);
 
-			return dataReturn(returnValue, dataResult(signedBuffer, signedLength));
+			return dataReturn(
+				returnValue,
+				dataResult(signatureBuffer, rsaSign.signatureLength)
+			);
 		}
 		finally {
-			dataFree(signedBuffer);
+			dataFree(signatureBuffer);
 			dataFree(messageBuffer);
 			dataFree(privateKeyBuffer);
 		}
 	},
 
-	signDetached: function (message, privateKey) {
-		return new Uint8Array(
-			rsaSign.sign(message, privateKey).buffer,
-			0,
-			rsaSign.signatureLength
-		);
-	},
-
 	open: function (signed, publicKey) {
-		var openedLength	= signed.length - rsaSign.signatureLength;
+		var signature	= new Uint8Array(signed.buffer, 0, rsaSign.signatureLength);
+		var message		= new Uint8Array(signed.buffer, rsaSign.signatureLength);
 
-		var openedBuffer	= Module._malloc(openedLength);
-		var signedBuffer	= Module._malloc(signed.length);
-		var publicKeyBuffer	= Module._malloc(rsaSign.publicKeyLength);
-
-		Module.writeArrayToMemory(signed, signedBuffer);
-		Module.writeArrayToMemory(publicKey, publicKeyBuffer);
-
-		try {
-			var returnValue	= Module._crypto_sign_rsasignjs_open(
-				openedBuffer,
-				0,
-				signedBuffer,
-				signed.length,
-				publicKeyBuffer
-			);
-
-			return dataReturn(returnValue, dataResult(openedBuffer, openedLength));
+		if (rsaSign.verifyDetached(signature, message, publicKey)) {
+			return message;
 		}
-		finally {
-			dataFree(openedBuffer);
-			dataFree(signedBuffer);
-			dataFree(publicKeyBuffer);
+		else {
+			dataResult('Invalid signature.');
 		}
 	},
 
 	verifyDetached: function (signature, message, publicKey) {
-		var signed	= new Uint8Array(rsaSign.signatureLength + message.length);
-		signed.set(signature);
-		signed.set(message, rsaSign.signatureLength);
+		var signatureBuffer	= Module._malloc(rsaSign.signatureLength);
+		var messageBuffer	= Module._malloc(message.length);
+		var publicKeyBuffer	= Module._malloc(rsaSign.publicKeyLength);
+
+		Module.writeArrayToMemory(signature, signatureBuffer);
+		Module.writeArrayToMemory(message, messageBuffer);
+		Module.writeArrayToMemory(publicKey, publicKeyBuffer);
 
 		try {
-			rsaSign.open(signed, publicKey);
-			return true; 
-		}
-		catch (_) {
-			return false;
+			return Module._rsasignjs_verify(
+				signatureBuffer,
+				messageBuffer,
+				message.length,
+				publicKeyBuffer
+			) === 1;
 		}
 		finally {
-			dataFree(signed);
+			dataFree(signatureBuffer);
+			dataFree(messageBuffer);
+			dataFree(publicKeyBuffer);
 		}
 	}
 };
