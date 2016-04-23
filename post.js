@@ -5,7 +5,7 @@ function dataReturn (returnValue, result) {
 		return result;
 	}
 	else {
-		throw new Error('SPHINCS error: ' + returnValue);
+		throw new Error('RSA error: ' + returnValue);
 	}
 }
 
@@ -26,24 +26,24 @@ function dataFree (buffer) {
 Module._randombytes_stir();
 
 
-var sphincs	= {
-	publicKeyLength: Module._sphincsjs_public_key_bytes(),
-	privateKeyLength: Module._sphincsjs_secret_key_bytes(),
-	signatureLength: Module._sphincsjs_signature_bytes(),
+var rsaSign	= {
+	publicKeyLength: Module._rsasignjs_public_key_bytes(),
+	privateKeyLength: Module._rsasignjs_secret_key_bytes(),
+	signatureLength: Module._rsasignjs_signature_bytes(),
 
 	keyPair: function () {
-		var publicKeyBuffer		= Module._malloc(sphincs.publicKeyLength);
-		var privateKeyBuffer	= Module._malloc(sphincs.privateKeyLength);
+		var publicKeyBuffer		= Module._malloc(rsaSign.publicKeyLength);
+		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyLength);
 
 		try {
-			var returnValue	= Module._crypto_sign_sphincs_keypair(
+			var returnValue	= Module._crypto_sign_rsasignjs_keypair(
 				publicKeyBuffer,
 				privateKeyBuffer
 			);
 
 			return dataReturn(returnValue, {
-				publicKey: dataResult(publicKeyBuffer, sphincs.publicKeyLength),
-				privateKey: dataResult(privateKeyBuffer, sphincs.privateKeyLength)
+				publicKey: dataResult(publicKeyBuffer, rsaSign.publicKeyLength),
+				privateKey: dataResult(privateKeyBuffer, rsaSign.privateKeyLength)
 			});
 		}
 		finally {
@@ -53,17 +53,17 @@ var sphincs	= {
 	},
 
 	sign: function (message, privateKey) {
-		var signedLength		= message.length + sphincs.signatureLength;
+		var signedLength		= message.length + rsaSign.signatureLength;
 
 		var signedBuffer		= Module._malloc(signedLength);
 		var messageBuffer		= Module._malloc(message.length);
-		var privateKeyBuffer	= Module._malloc(sphincs.privateKeyLength);
+		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyLength);
 
 		Module.writeArrayToMemory(message, messageBuffer);
 		Module.writeArrayToMemory(privateKey, privateKeyBuffer);
 
 		try {
-			var returnValue	= Module._crypto_sign_sphincs(
+			var returnValue	= Module._crypto_sign_rsaSign(
 				signedBuffer,
 				0,
 				messageBuffer,
@@ -82,24 +82,24 @@ var sphincs	= {
 
 	signDetached: function (message, privateKey) {
 		return new Uint8Array(
-			sphincs.sign(message, privateKey).buffer,
+			rsaSign.sign(message, privateKey).buffer,
 			0,
-			sphincs.signatureLength
+			rsaSign.signatureLength
 		);
 	},
 
 	open: function (signed, publicKey) {
-		var openedLength	= signed.length - sphincs.signatureLength;
+		var openedLength	= signed.length - rsaSign.signatureLength;
 
 		var openedBuffer	= Module._malloc(openedLength);
 		var signedBuffer	= Module._malloc(signed.length);
-		var publicKeyBuffer	= Module._malloc(sphincs.publicKeyLength);
+		var publicKeyBuffer	= Module._malloc(rsaSign.publicKeyLength);
 
 		Module.writeArrayToMemory(signed, signedBuffer);
 		Module.writeArrayToMemory(publicKey, publicKeyBuffer);
 
 		try {
-			var returnValue	= Module._crypto_sign_sphincs_open(
+			var returnValue	= Module._crypto_sign_rsasignjs_open(
 				openedBuffer,
 				0,
 				signedBuffer,
@@ -117,12 +117,12 @@ var sphincs	= {
 	},
 
 	verifyDetached: function (signature, message, publicKey) {
-		var signed	= new Uint8Array(sphincs.signatureLength + message.length);
+		var signed	= new Uint8Array(rsaSign.signatureLength + message.length);
 		signed.set(signature);
-		signed.set(message, sphincs.signatureLength);
+		signed.set(message, rsaSign.signatureLength);
 
 		try {
-			sphincs.open(signed, publicKey);
+			rsaSign.open(signed, publicKey);
 			return true; 
 		}
 		catch (_) {
@@ -136,8 +136,8 @@ var sphincs	= {
 
 
 
-return sphincs;
+return rsaSign;
 
 }());
 
-self.sphincs	= sphincs;
+self.rsaSign	= rsaSign;

@@ -1,1 +1,1 @@
-var sphincs = (function () { 
+var rsaSign = (function () { 
