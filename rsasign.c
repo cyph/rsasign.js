@@ -1,15 +1,21 @@
-#include "rsasign.h"
+#include "openssl/rsa.h"
+#include "openssl/asn1.h"
+#include "openssl/asn1t.h"
+#include "openssl/x509.h"
+#include "openssl/rand.h"
+#include "randombytes.h"
 
-size_t public_key_len;
-size_t private_key_len;
 
+void rsasignjs_init () {
+	randombytes_stir();
+}
 
 int rsasignjs_public_key_bytes () {
-	return public_key_len;
+	return RSASIGNJS_PUBLEN;
 }
 
 int rsasignjs_secret_key_bytes () {
-	return private_key_len;
+	return RSASIGNJS_PRIVLEN;
 }
 
 int rsasignjs_signature_bytes () {
@@ -17,19 +23,25 @@ int rsasignjs_signature_bytes () {
 }
 
 int rsasignjs_keypair (
-	uint8_t* public_key,
-	uint8_t* private_key
+	uint8_t** public_key,
+	size_t* public_key_len,
+	uint8_t** private_key,
+	size_t* private_key_len
 ) {
-	RSA* rsa	= FIPS_rsa_new();
+	BIGNUM* prime	= BN_new();
+	RSA* rsa		= RSA_new();
 
-	if (FIPS_rsa_generate_key_ex(rsa, RSASIGNJS_BITS, NULL, NULL) != 1) {
+	BN_add_word(prime, RSA_F4);
+
+	if (RSA_generate_key_ex(rsa, RSASIGNJS_BITS, prime, NULL) != 1) {
 		return 1;
 	}
 	
-	public_key_len	= i2d_RSAPublicKey(rsa, &public_key);
-	private_key_len	= i2d_RSAPrivateKey(rsa, &private_key);
+	*public_key_len		= i2d_RSA_PUBKEY(rsa, public_key);
+	*private_key_len	= i2d_RSAPrivateKey(rsa, private_key);
 
-	FIPS_rsa_free(rsa);
+	RSA_free(rsa);
+	BN_free(prime);
 
 	return 0;
 }
@@ -52,15 +64,22 @@ int rsasignjs_verify (
 	return 1;
 }
 
-void rsasignjs_init (const void *seed, int seed_len) {
-	FIPS_x931_seed(seed, seed_len);
 
-	uint8_t* public_key;
-	uint8_t* private_key;
-	rsasignjs_keypair(
-		public_key,
-		private_key
-	);
-	free(public_key);
-	free(private_key);
+void RAND_seed (const void *buf, int num) {
+	randombytes_stir();
+}
+int RAND_bytes (unsigned char *buf, int num) {
+	randombytes_buf(buf, num);
+	return 1;
+}
+void RAND_cleanup () {}
+void RAND_add (const void *buf, int num, double entropy) {
+	randombytes_stir();
+}
+int RAND_pseudo_bytes (unsigned char *buf, int num) {
+	randombytes_buf(buf, num);
+	return 1;
+}
+int RAND_status () {
+	return 1;
 }
