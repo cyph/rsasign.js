@@ -22,8 +22,16 @@ function dataFree (buffer) {
 	catch (_) {}
 }
 
+function dereferenceNumber (buffer) {
+	return new Uint32Array(Module.HEAPU32.buffer, buffer, 1)[0];
+}
 
-Module._rsasignjs_init();
+
+var seedLength	= 512;
+var seed		= Module._malloc(seedLength);
+crypto.getRandomValues(new Uint8Array(Module.HEAPU8.buffer, seed, seedLength));
+Module._rsasignjs_init(seed, seedLength);
+Module._free(seed);
 
 
 var rsaSign	= {
@@ -32,23 +40,37 @@ var rsaSign	= {
 	signatureLength: Module._rsasignjs_signature_bytes(),
 
 	keyPair: function () {
-		var publicKeyBuffer		= Module._malloc(rsaSign.publicKeyLength);
-		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyLength);
+		var publicKeyBuffer;
+		var publicKeyBufferBuffer	= Module._malloc(4);
+
+		var privateKeyBuffer;
+		var privateKeyBufferBuffer	= Module._malloc(4);
 
 		try {
 			var returnValue	= Module._rsasignjs_keypair(
-				publicKeyBuffer,
-				privateKeyBuffer
+				publicKeyBufferBuffer,
+				privateKeyBufferBuffer
 			);
 
+			publicKeyBuffer		= dereferenceNumber(publicKeyBufferBuffer);
+			privateKeyBuffer	= dereferenceNumber(privateKeyBufferBuffer);
+
 			return dataReturn(returnValue, {
-				publicKey: dataResult(publicKeyBuffer, rsaSign.publicKeyLength),
-				privateKey: dataResult(privateKeyBuffer, rsaSign.privateKeyLength)
+				publicKey: dataResult(
+					publicKeyBuffer,
+					rsaSign.publicKeyLength
+				),
+				privateKey: dataResult(
+					privateKeyBuffer,
+					rsaSign.privateKeyLength
+				)
 			});
 		}
 		finally {
 			dataFree(publicKeyBuffer);
+			dataFree(publicKeyBufferBuffer);
 			dataFree(privateKeyBuffer);
+			dataFree(privateKeyBufferBuffer);
 		}
 	},
 

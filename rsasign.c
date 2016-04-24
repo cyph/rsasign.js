@@ -1,27 +1,36 @@
-#include "randombytes.h"
-#include "openssl/rsa.h"
+#include "rsasign.h"
 
+size_t public_key_len;
+size_t private_key_len;
 
-void rsasignjs_init () {
-	randombytes_stir();
-}
 
 int rsasignjs_public_key_bytes () {
-	return 0;
+	return public_key_len;
 }
 
 int rsasignjs_secret_key_bytes () {
-	return 0;
+	return private_key_len;
 }
 
 int rsasignjs_signature_bytes () {
-	return 0;
+	return RSASIGNJS_SIGLEN;
 }
 
 int rsasignjs_keypair (
 	uint8_t* public_key,
 	uint8_t* private_key
 ) {
+	RSA* rsa	= FIPS_rsa_new();
+
+	if (FIPS_rsa_generate_key_ex(rsa, RSASIGNJS_BITS, NULL, NULL) != 1) {
+		return 1;
+	}
+	
+	public_key_len	= i2d_RSAPublicKey(rsa, &public_key);
+	private_key_len	= i2d_RSAPrivateKey(rsa, &private_key);
+
+	FIPS_rsa_free(rsa);
+
 	return 0;
 }
 
@@ -43,3 +52,15 @@ int rsasignjs_verify (
 	return 1;
 }
 
+void rsasignjs_init (const void *seed, int seed_len) {
+	FIPS_x931_seed(seed, seed_len);
+
+	uint8_t* public_key;
+	uint8_t* private_key;
+	rsasignjs_keypair(
+		public_key,
+		private_key
+	);
+	free(public_key);
+	free(private_key);
+}
