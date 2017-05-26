@@ -56,8 +56,8 @@ all:
 			--pre-js pre.js --post-js post.js \
 		" | perl -pe "s/\s+/ /g" | perl -pe "s/\[ /\[/g" | perl -pe "s/ \]/\]/g")"; \
 		\
-		bash -c "emcc -O3 $$args -o dist/rsa-sign.js"; \
-		bash -c "emcc -O0 -g4 $$args -o dist/rsa-sign.debug.js"; \
+		bash -c "emcc -O3 $$args -o dist/rsasign.js"; \
+		bash -c "emcc -O0 -g4 $$args -o dist/rsasign.debug.js"; \
 	'
 
 	rm -rf openssl
