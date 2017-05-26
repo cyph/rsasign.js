@@ -1,8 +1,8 @@
-#include "openssl/rsa.h"
 #include "openssl/asn1.h"
 #include "openssl/asn1t.h"
-#include "openssl/x509.h"
 #include "openssl/rand.h"
+#include "openssl/rsa.h"
+#include "openssl/x509.h"
 #include "randombytes.h"
 
 
@@ -23,10 +23,8 @@ int rsasignjs_signature_bytes () {
 }
 
 int rsasignjs_keypair (
-	uint8_t** public_key,
-	size_t* public_key_len,
-	uint8_t** private_key,
-	size_t* private_key_len
+	uint8_t* public_key,
+	uint8_t* private_key
 ) {
 	BIGNUM* prime	= BN_new();
 	RSA* rsa		= RSA_new();
@@ -37,8 +35,8 @@ int rsasignjs_keypair (
 		return 1;
 	}
 	
-	*public_key_len		= i2d_RSA_PUBKEY(rsa, public_key);
-	*private_key_len	= i2d_RSAPrivateKey(rsa, private_key);
+	i2d_RSA_PUBKEY(rsa, &public_key);
+	i2d_RSAPrivateKey(rsa, &private_key);
 
 	RSA_free(rsa);
 	BN_free(prime);
@@ -65,21 +63,25 @@ int rsasignjs_verify (
 }
 
 
-void RAND_seed (const void *buf, int num) {
+void RAND_add (const void *buf, int num, double entropy) {
 	randombytes_stir();
 }
+
 int RAND_bytes (unsigned char *buf, int num) {
 	randombytes_buf(buf, num);
 	return 1;
 }
-void RAND_cleanup () {}
-void RAND_add (const void *buf, int num, double entropy) {
+
+int RAND_pseudo_bytes (unsigned char *buf, int num) {
+	return RAND_bytes(buf, num);
+}
+
+void RAND_seed (const void *buf, int num) {
 	randombytes_stir();
 }
-int RAND_pseudo_bytes (unsigned char *buf, int num) {
-	randombytes_buf(buf, num);
-	return 1;
-}
+
 int RAND_status () {
 	return 1;
 }
+
+void rand_cleanup_int () {}

@@ -1,48 +1,27 @@
 all:
-	rm -rf dist openssl 2> /dev/null
+	rm -rf dist # libsodium openssl 2> /dev/null
 	mkdir dist
 
 	git clone --depth 1 -b stable https://github.com/jedisct1/libsodium
 	cd libsodium ; emconfigure ./configure --enable-minimal --disable-shared
 
-	git clone --depth 1 -b OpenSSL_1_0_2-stable https://github.com/openssl/openssl
-	cd openssl ; emconfigure ./config no-asm no-threads no-shared no-dso no-sse2 no-ec2m ; sed -i 's|CC= $(CROSS_COMPILE)|CC=|g' Makefile ; sed -i 's|-arch i386||g' Makefile ; make
+	git clone --depth 1 -b OpenSSL_1_1_0-stable https://github.com/openssl/openssl
+	cd openssl ; emconfigure perl Configure no-asm no-engine no-hw no-threads no-shared no-dso no-sse2 no-ec2m linux-generic32 ; sed -i 's|$$(CROSS_COMPILE)/home/|/home/|g' Makefile ; make
 
 	bash -c ' \
 		args="$$(echo " \
 			--memory-init-file 0 \
-			-DRSASIGNJS_BITS=2048 -DRSASIGNJS_PUBLEN=300 -DRSASIGNJS_PRIVLEN=1200 -DRSASIGNJS_SIGLEN=512 \
-			-s TOTAL_MEMORY=117440512 -s TOTAL_STACK=52443072 \
+			-DRSASIGNJS_BITS=2048 -DRSASIGNJS_PUBLEN=450 -DRSASIGNJS_PRIVLEN=1700 -DRSASIGNJS_SIGLEN=256 \
+			-s TOTAL_MEMORY=16777216 -s TOTAL_STACK=8388608 \
 			-s NO_DYNAMIC_EXECUTION=1 -s RUNNING_JS_OPTS=1 -s ASSERTIONS=0 \
 			-s AGGRESSIVE_VARIABLE_ELIMINATION=1 -s ALIASING_FUNCTION_POINTERS=1 \
 			-s FUNCTION_POINTER_ALIGNMENT=1 -s DISABLE_EXCEPTION_CATCHING=1 \
 			 -s RESERVED_FUNCTION_POINTERS=8 -s NO_FILESYSTEM=1 \
 			-Ilibsodium/src/libsodium/include/sodium \
-			-Iopenssl -Iopenssl/include -Iopenssl/fips -Iopenssl/crypto \
+			-Iopenssl -Iopenssl/include -Iopenssl/crypto \
 			libsodium/src/libsodium/randombytes/randombytes.c \
-			openssl/crypto/*.o \
-			openssl/crypto/err/*.o \
-			openssl/crypto/stack/*.o \
-			openssl/crypto/lhash/*.o \
-			openssl/crypto/bio/*.o \
-			openssl/crypto/objects/*.o \
-			openssl/crypto/buffer/*.o \
-			openssl/crypto/engine/*.o \
-			openssl/crypto/evp/*.o \
-			openssl/crypto/x509v3/*.o \
-			openssl/crypto/pkcs7/*.o \
-			openssl/crypto/cmac/*.o \
-			openssl/crypto/hmac/*.o \
-			openssl/crypto/cms/*.o \
-			openssl/crypto/ecdh/*.o \
-			openssl/crypto/ecdsa/*.o \
-			openssl/crypto/ec/*.o \
-			openssl/crypto/dsa/*.o \
-			openssl/crypto/dh/*.o \
-			openssl/crypto/sha/*.o \
-			openssl/crypto/bn/*.o \
-			openssl/crypto/asn1/*.o \
-			openssl/crypto/rsa/*.o \
+			openssl/crypto/rand/rand_err.o \
+			$$(find openssl/crypto -type f -name "*.o" -not -path "openssl/crypto/rand/*" | tr "\n" " ") \
 			rsasign.c \
 			-s EXPORTED_FUNCTIONS=\"[ \
 				'"'"'_rsasignjs_init'"'"', \
@@ -60,7 +39,7 @@ all:
 		bash -c "emcc -O0 -g4 $$args -o dist/rsasign.debug.js"; \
 	'
 
-	rm -rf openssl
+	rm -rf libsodium openssl
 
 clean:
-	rm -rf dist openssl
+	rm -rf dist libsodium openssl
