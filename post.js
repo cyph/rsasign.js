@@ -31,9 +31,9 @@ Module._rsasignjs_init();
 
 
 var rsaSign	= {
-	publicKeyLength: Module._rsasignjs_public_key_bytes(),
-	privateKeyLength: Module._rsasignjs_secret_key_bytes(),
-	signatureLength: Module._rsasignjs_signature_bytes(),
+	publicKeyBytes: Module._rsasignjs_public_key_bytes(),
+	privateKeyBytes: Module._rsasignjs_secret_key_bytes(),
+	bytes: Module._rsasignjs_signature_bytes(),
 
 	keyPair: function () {
 		var publicKeyBuffer;
@@ -86,16 +86,16 @@ var rsaSign	= {
 
 	sign: function (message, privateKey) {
 		var signature	= rsaSign.signDetached(message, privateKey);
-		var signed		= new Uint8Array(rsaSign.signatureLength + message.length);
+		var signed		= new Uint8Array(rsaSign.bytes + message.length);
 		signed.set(signature);
-		signed.set(message, rsaSign.signatureLength);
+		signed.set(message, rsaSign.bytes);
 		return signed;
 	},
 
 	signDetached: function (message, privateKey) {
-		var signatureBuffer		= Module._malloc(rsaSign.signatureLength);
+		var signatureBuffer		= Module._malloc(rsaSign.bytes);
 		var messageBuffer		= Module._malloc(message.length);
-		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyLength);
+		var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyBytes);
 
 		Module.writeArrayToMemory(message, messageBuffer);
 		Module.writeArrayToMemory(privateKey, privateKeyBuffer);
@@ -110,7 +110,7 @@ var rsaSign	= {
 
 			return dataReturn(
 				returnValue,
-				dataResult(signatureBuffer, rsaSign.signatureLength)
+				dataResult(signatureBuffer, rsaSign.bytes)
 			);
 		}
 		finally {
@@ -121,8 +121,8 @@ var rsaSign	= {
 	},
 
 	open: function (signed, publicKey) {
-		var signature	= new Uint8Array(signed.buffer, 0, rsaSign.signatureLength);
-		var message		= new Uint8Array(signed.buffer, rsaSign.signatureLength);
+		var signature	= new Uint8Array(signed.buffer, 0, rsaSign.bytes);
+		var message		= new Uint8Array(signed.buffer, rsaSign.bytes);
 
 		if (rsaSign.verifyDetached(signature, message, publicKey)) {
 			return message;
@@ -133,9 +133,9 @@ var rsaSign	= {
 	},
 
 	verifyDetached: function (signature, message, publicKey) {
-		var signatureBuffer	= Module._malloc(rsaSign.signatureLength);
+		var signatureBuffer	= Module._malloc(rsaSign.bytes);
 		var messageBuffer	= Module._malloc(message.length);
-		var publicKeyBuffer	= Module._malloc(rsaSign.publicKeyLength);
+		var publicKeyBuffer	= Module._malloc(rsaSign.publicKeyBytes);
 
 		Module.writeArrayToMemory(signature, signatureBuffer);
 		Module.writeArrayToMemory(message, messageBuffer);
@@ -163,4 +163,11 @@ return rsaSign;
 
 }());
 
-self.rsaSign	= rsaSign;
+
+if (typeof module !== 'undefined' && module.exports) {
+	rsaSign.rsaSign	= rsaSign;
+	module.exports	= rsaSign;
+}
+else {
+	self.rsaSign	= rsaSign;
+}
