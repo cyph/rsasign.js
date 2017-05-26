@@ -9,11 +9,30 @@ via [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto
 
 ## Example Usage
 
-	var keyPair		= rsaSign.keyPair();
-	var message		= new Uint8Array([104, 101, 108, 108, 111, 0]); // "hello"
+	const keyPair /*: {privateKey: Uint8Array; publicKey: Uint8Array} */ =
+		rsaSign.keyPair()
+	;
 
-	var signed		= rsaSign.sign(message, keyPair.privateKey);
-	var verified	= rsaSign.open(signed, keyPair.publicKey); // same as message
+	const message /*: Uint8Array */ =
+		new Uint8Array([104, 101, 108, 108, 111, 0]) // "hello"
+	;
+
+	/* Combined signatures */
+
+	const signed /*: Uint8Array */ =
+		rsaSign.sign(message, keyPair.privateKey)
+	;
+
+	const verified /*: Uint8Array */ =
+		rsaSign.open(signed, keyPair.publicKey) // same as message
+	;
+
+	/* Detached signatures */
 	
-	var signature	= rsaSign.signDetached(message, keyPair.privateKey);
-	var isValid		= rsaSign.verifyDetached(signature, message, keyPair.publicKey); // true
+	const signature /*: Uint8Array */ =
+		rsaSign.signDetached(message, keyPair.privateKey)
+	;
+
+	const isValid /*: boolean */ =
+		rsaSign.verifyDetached(signature, message, keyPair.publicKey) // true
+	;
