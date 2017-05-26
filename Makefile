@@ -2,10 +2,10 @@ all:
 	rm -rf dist openssl 2> /dev/null
 	mkdir dist
 
-	git clone -b stable https://github.com/jedisct1/libsodium.git
+	git clone --depth 1 -b stable https://github.com/jedisct1/libsodium
 	cd libsodium ; emconfigure ./configure --enable-minimal --disable-shared
 
-	git clone -b OpenSSL_1_0_2-stable https://github.com/openssl/openssl.git
+	git clone --depth 1 -b OpenSSL_1_0_2-stable https://github.com/openssl/openssl
 	cd openssl ; emconfigure ./config no-asm no-threads no-shared no-dso no-sse2 no-ec2m ; sed -i 's|CC= $(CROSS_COMPILE)|CC=|g' Makefile ; sed -i 's|-arch i386||g' Makefile ; make
 
 	bash -c ' \
