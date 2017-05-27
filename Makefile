@@ -1,6 +1,8 @@
 all:
-	rm -rf dist # libsodium openssl 2> /dev/null
+	rm -rf dist libsodium node_modules openssl 2> /dev/null
 	mkdir dist
+
+	npm install
 
 	git clone --depth 1 -b stable https://github.com/jedisct1/libsodium
 	cd libsodium ; emconfigure ./configure --enable-minimal --disable-shared
@@ -39,7 +41,11 @@ all:
 		bash -c "emcc -O0 -g4 $$args -o dist/rsasign.debug.js"; \
 	'
 
-	rm -rf libsodium openssl
+	webpack dist/rsasign.js dist/rsasign.js
+	webpack dist/rsasign.debug.js dist/rsasign.debug.js
+	uglifyjs dist/rsasign.js -o dist/rsasign.js
+
+	rm -rf libsodium node_modules openssl
 
 clean:
-	rm -rf dist libsodium openssl
+	rm -rf dist libsodium node_modules openssl

@@ -7,10 +7,12 @@ hash function [SHA-256](https://en.wikipedia.org/wiki/SHA-2) wrapped for usage i
 via [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) and
 [Emscripten](https://github.com/kripken/emscripten).
 
+Uses native RSA implementation in browser and Node.js when available.
+
 ## Example Usage
 
 	const keyPair /*: {privateKey: Uint8Array; publicKey: Uint8Array} */ =
-		rsaSign.keyPair()
+		await rsaSign.keyPair()
 	;
 
 	const message /*: Uint8Array */ =
@@ -20,19 +22,19 @@ via [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto
 	/* Combined signatures */
 
 	const signed /*: Uint8Array */ =
-		rsaSign.sign(message, keyPair.privateKey)
+		await rsaSign.sign(message, keyPair.privateKey)
 	;
 
 	const verified /*: Uint8Array */ =
-		rsaSign.open(signed, keyPair.publicKey) // same as message
+		await rsaSign.open(signed, keyPair.publicKey) // same as message
 	;
 
 	/* Detached signatures */
 	
 	const signature /*: Uint8Array */ =
-		rsaSign.signDetached(message, keyPair.privateKey)
+		await rsaSign.signDetached(message, keyPair.privateKey)
 	;
 
 	const isValid /*: boolean */ =
-		rsaSign.verifyDetached(signature, message, keyPair.publicKey) // true
+		await rsaSign.verifyDetached(signature, message, keyPair.publicKey) // true
 	;

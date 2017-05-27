@@ -18,5 +18,9 @@
 	"license": "BSD-2-Clause",
 	"bugs": {
 		"url": "https://github.com/cyph/rsasign.js/issues"
+	},
+	"dependencies": {
+		"rsa-keygen": "*",
+		"pem-jwk-norecompute": "*"
 	}
 }
