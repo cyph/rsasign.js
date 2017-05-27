@@ -48,18 +48,48 @@ int rsasignjs_sign (
 	uint8_t* signature,
 	uint8_t* message,
 	int message_len,
-	uint8_t* private_key
+	const uint8_t* private_key
 ) {
-	return 0;
+	RSA* rsa	= RSA_new();
+
+	d2i_RSAPrivateKey(&rsa, &private_key, RSASIGNJS_PRIVLEN);
+
+	int status	= RSA_sign_ASN1_OCTET_STRING(
+		NID_sha256,
+		message,
+		message_len,
+		signature,
+		NULL,
+		rsa
+	);
+
+	RSA_free(rsa);
+
+	return status;
 }
 
 int rsasignjs_verify (
 	uint8_t* signature,
 	uint8_t* message,
 	int message_len,
-	uint8_t* public_key
+	const uint8_t* public_key
 ) {
-	return 1;
+	RSA* rsa	= RSA_new();
+
+	d2i_RSA_PUBKEY(&rsa, &public_key, RSASIGNJS_PUBLEN);
+
+	int status	= RSA_verify_ASN1_OCTET_STRING(
+		NID_sha256,
+		message,
+		message_len,
+		signature,
+		RSASIGNJS_SIGLEN,
+		rsa
+	);
+
+	RSA_free(rsa);
+
+	return status;
 }
 
 
