@@ -1,14 +1,5 @@
 ;
 
-function dataReturn (returnValue, result) {
-	if (returnValue === 0) {
-		return result;
-	}
-	else {
-		throw new Error('RSA Sign error: ' + returnValue);
-	}
-}
-
 function dataResult (buffer, bytes) {
 	return new Uint8Array(
 		new Uint8Array(Module.HEAPU8.buffer, buffer, bytes)
@@ -116,7 +107,11 @@ var rsaSign	= {
 					privateKeyBuffer
 				);
 
-				return dataReturn(returnValue, {
+				if (returnValue !== 0) {
+					throw new Error('RSA Sign error: keyPair failed (' + returnValue + ')');
+				}
+
+				return {
 					publicKey:
 						'-----BEGIN PUBLIC KEY-----\n' +
 						sodiumUtil.to_base64(dataResult(publicKeyBuffer, rsaSign.publicKeyBytes)) +
@@ -126,7 +121,7 @@ var rsaSign	= {
 						'-----BEGIN RSA PRIVATE KEY-----\n' +
 						sodiumUtil.to_base64(dataResult(privateKeyBuffer, rsaSign.privateKeyBytes)) +
 						'\n-----END RSA PRIVATE KEY-----'
-				});
+				};
 			}
 			finally {
 				dataFree(publicKeyBuffer, rsaSign.publicKeyBytes);
@@ -171,9 +166,11 @@ var rsaSign	= {
 					return crypto.subtle.sign(rsaSign.algorithm, sk, message);
 				}
 			}).catch(function () {
+				sk	= sodiumUtil.from_base64(sk.split('-----')[2]);
+
 				var signatureBuffer		= Module._malloc(rsaSign.bytes);
 				var messageBuffer		= Module._malloc(message.length);
-				var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyBytes);
+				var privateKeyBuffer	= Module._malloc(sk.length);
 
 				Module.writeArrayToMemory(message, messageBuffer);
 				Module.writeArrayToMemory(sk, privateKeyBuffer);
@@ -183,13 +180,15 @@ var rsaSign	= {
 						signatureBuffer,
 						messageBuffer,
 						message.length,
-						privateKeyBuffer
+						privateKeyBuffer,
+						sk.length
 					);
 
-					return dataReturn(
-						returnValue,
-						dataResult(signatureBuffer, rsaSign.bytes)
-					);
+					if (returnValue !== 1) {
+						throw new Error('RSA Sign error: sign failed (' + returnValue + ')');
+					}
+
+					return dataResult(signatureBuffer, rsaSign.bytes);
 				}
 				finally {
 					dataFree(signatureBuffer);
@@ -231,21 +230,26 @@ var rsaSign	= {
 					return crypto.subtle.verify(rsaSign.algorithm, pk, signature, message);
 				}
 			}).catch(function () {
+				pk	= sodiumUtil.from_base64(pk.split('-----')[2]);
+
 				var signatureBuffer	= Module._malloc(rsaSign.bytes);
 				var messageBuffer	= Module._malloc(message.length);
-				var publicKeyBuffer	= Module._malloc(rsaSign.publicKeyBytes);
+				var publicKeyBuffer	= Module._malloc(pk.length);
 
 				Module.writeArrayToMemory(signature, signatureBuffer);
 				Module.writeArrayToMemory(message, messageBuffer);
 				Module.writeArrayToMemory(pk, publicKeyBuffer);
 
 				try {
-					return Module._rsasignjs_verify(
+					var returnValue	= Module._rsasignjs_verify(
 						signatureBuffer,
 						messageBuffer,
 						message.length,
-						publicKeyBuffer
-					) === 1;
+						publicKeyBuffer,
+						pk.length
+					);
+
+					return returnValue === 1;
 				}
 				finally {
 					dataFree(signatureBuffer);

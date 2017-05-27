@@ -2,6 +2,7 @@
 #include "openssl/asn1t.h"
 #include "openssl/rand.h"
 #include "openssl/rsa.h"
+#include "openssl/sha.h"
 #include "openssl/x509.h"
 #include "randombytes.h"
 
@@ -48,16 +49,25 @@ int rsasignjs_sign (
 	uint8_t* signature,
 	uint8_t* message,
 	int message_len,
-	const uint8_t* private_key
+	const uint8_t* private_key,
+	int private_key_len
 ) {
 	RSA* rsa	= RSA_new();
 
-	d2i_RSAPrivateKey(&rsa, &private_key, RSASIGNJS_PRIVLEN);
+	if (d2i_RSAPrivateKey(&rsa, &private_key, private_key_len) == NULL) {
+		return -1;
+	}
 
-	int status	= RSA_sign_ASN1_OCTET_STRING(
+	uint8_t hash[SHA256_DIGEST_LENGTH];
+	SHA256_CTX sha256;
+	SHA256_Init(&sha256);
+	SHA256_Update(&sha256, message, message_len);
+	SHA256_Final(hash, &sha256);
+
+	int status	= RSA_sign(
 		NID_sha256,
-		message,
-		message_len,
+		hash,
+		SHA256_DIGEST_LENGTH,
 		signature,
 		NULL,
 		rsa
@@ -72,16 +82,25 @@ int rsasignjs_verify (
 	uint8_t* signature,
 	uint8_t* message,
 	int message_len,
-	const uint8_t* public_key
+	const uint8_t* public_key,
+	int public_key_len
 ) {
 	RSA* rsa	= RSA_new();
 
-	d2i_RSA_PUBKEY(&rsa, &public_key, RSASIGNJS_PUBLEN);
+	if (d2i_RSAPublicKey(&rsa, &public_key, public_key_len) == NULL) {
+		return -1;
+	}
 
-	int status	= RSA_verify_ASN1_OCTET_STRING(
+	uint8_t hash[SHA256_DIGEST_LENGTH];
+	SHA256_CTX sha256;
+	SHA256_Init(&sha256);
+	SHA256_Update(&sha256, message, message_len);
+	SHA256_Final(hash, &sha256);
+
+	int status	= RSA_verify(
 		NID_sha256,
-		message,
-		message_len,
+		hash,
+		SHA256_DIGEST_LENGTH,
 		signature,
 		RSASIGNJS_SIGLEN,
 		rsa
