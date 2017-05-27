@@ -37,16 +37,16 @@ all:
 			--pre-js pre.js --post-js post.js \
 		" | perl -pe "s/\s+/ /g" | perl -pe "s/\[ /\[/g" | perl -pe "s/ \]/\]/g")"; \
 		\
-		bash -c "emcc -Oz $$args -o dist/rsasign.js"; \
+		bash -c "emcc -Oz $$args -o dist/rsasign.module.js"; \
 		bash -c "emcc -O0 -g4 $$args -o dist/rsasign.debug.js"; \
 	'
 
-	sed -i 's|require(|eval("require")(|g' dist/rsasign.js
-	sed -i 's|eval("require")("pem-jwk-norecompute")|require("pem-jwk-norecompute")|g' dist/rsasign.js
-	sed -i 's|eval("require")("sodiumutil")|require("sodiumutil")|g' dist/rsasign.js
+	sed -i 's|require(|eval("require")(|g' dist/rsasign.module.js
+	sed -i 's|eval("require")("pem-jwk-norecompute")|require("pem-jwk-norecompute")|g' dist/rsasign.module.js
+	sed -i 's|eval("require")("sodiumutil")|require("sodiumutil")|g' dist/rsasign.module.js
 
-	webpack --output-library-target var --output-library rsaSign dist/rsasign.js dist/rsasign.global.js
-	uglifyjs dist/rsasign.global.js -o dist/rsasign.global.js
+	webpack --output-library-target var --output-library rsaSign dist/rsasign.module.js dist/rsasign.js
+	uglifyjs dist/rsasign.js -o dist/rsasign.js
 
 	rm -rf libsodium node_modules openssl
 

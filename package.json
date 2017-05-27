@@ -1,8 +1,8 @@
 {
 	"name": "rsasign",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"description": "JavaScript wrapper for an asm.js implementation of RSASSA-PKCS1-v1_5",
-	"main": "dist/rsasign.js",
+	"main": "dist/rsasign.module.js",
 	"types": "./rsasign.d.ts",
 	"repository": {
 		"type": "git",
