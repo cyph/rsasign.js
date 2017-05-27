@@ -21,6 +21,7 @@
 	},
 	"dependencies": {
 		"rsa-keygen": "*",
-		"pem-jwk-norecompute": "*"
+		"pem-jwk-norecompute": "*",
+		"sodiumutil": "*"
 	}
 }

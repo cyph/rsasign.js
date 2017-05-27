@@ -22,20 +22,14 @@ function dataFree (buffer) {
 	catch (_) {}
 }
 
-function clearMemory (data) {
-	if (data instanceof Uint8Array) {
-		sodiumUtil.memzero(data);
-	}
-	else if (isNode && data instanceof Buffer) {
-		data.fill(0);
-	}
-}
-
 function importJWK (key, purpose) {
 	return Promise.resolve().then(function () {
-		var jwk	= JSON.parse(
+		var zeroIndex	= key.indexOf(0);
+		var jwk			= JSON.parse(
 			sodiumUtil.to_string(
-				new Uint8Array(new Uint8Array(key).buffer, 0, key.indexOf(0))
+				zeroIndex > -1 ?
+					new Uint8Array(new Uint8Array(key).buffer, 0, key.indexOf(0)) :
+					new Uint8Array(key)
 			)
 		);
 
@@ -43,7 +37,7 @@ function importJWK (key, purpose) {
 			return crypto.subtle.importKey(
 				'jwk',
 				jwk,
-				rsa.algorithm,
+				rsaSign.algorithm,
 				false,
 				[purpose]
 			);
@@ -53,7 +47,7 @@ function importJWK (key, purpose) {
 	});
 }
 	
-function exportJWK (key) {
+function exportJWK (key, bytes) {
 	return Promise.resolve().then(function () {
 		if (typeof key === 'string') {
 			return pemJwk.pem2jwk(key);
@@ -62,11 +56,15 @@ function exportJWK (key) {
 			return crypto.subtle.exportKey(
 				'jwk',
 				key,
-				rsa.algorithm.name
+				rsaSign.algorithm.name
 			);
 		}
 	}).then(function (jwk) {
-		return sodiumUtil.from_string(JSON.stringify(jwk));
+		var a	= sodiumUtil.from_string(JSON.stringify(jwk));
+		var b	= new Uint8Array(bytes);
+		b.set(a);
+		sodiumUtil.memzero(a);
+		return b;
 	});
 }
 
@@ -125,19 +123,19 @@ var rsaSign	= {
 						'\n-----END PUBLIC KEY-----'
 					,
 					privateKey:
-						'-----BEGIN PRIVATE KEY-----\n' +
+						'-----BEGIN RSA PRIVATE KEY-----\n' +
 						sodiumUtil.to_base64(dataResult(privateKeyBuffer, rsaSign.privateKeyBytes)) +
-						'\n-----END PRIVATE KEY-----'
+						'\n-----END RSA PRIVATE KEY-----'
 				});
 			}
 			finally {
-				dataFree(publicKeyBuffer);
-				dataFree(privateKeyBuffer);
+				dataFree(publicKeyBuffer, rsaSign.publicKeyBytes);
+				dataFree(privateKeyBuffer, rsaSign.privateKeyBytes);
 			}
 		}).then(function (keyPair) {
 			return Promise.all([
-				exportJWK(keyPair.publicKey),
-				exportJWK(keyPair.privateKey)
+				exportJWK(keyPair.publicKey, rsaSign.publicKeyBytes),
+				exportJWK(keyPair.privateKey, rsaSign.privateKeyBytes)
 			]);
 		}).then(function (results) {
 			return {
@@ -161,12 +159,12 @@ var rsaSign	= {
 			return Promise.resolve().then(function () {
 				if (isNode) {
 					var messageBuffer	= new Buffer(message);
-					var signer			= crypto.createSign(rsaSign.algorithm);
+					var signer			= nodeCrypto.createSign(rsaSign.algorithm);
 					signer.write(messageBuffer);
 					signer.end();
 
 					var signature	= signer.sign(sk);
-					clearMemory(messageBuffer);
+					sodiumUtil.memzero(messageBuffer);
 					return signature;
 				}
 				else {
@@ -199,7 +197,7 @@ var rsaSign	= {
 					dataFree(privateKeyBuffer);
 				}
 			}).then(function (signature) {
-				clearMemory(sk);
+				sodiumUtil.memzero(sk);
 				return new Uint8Array(signature);
 			});
 		});
@@ -225,7 +223,7 @@ var rsaSign	= {
 		return importJWK(publicKey, 'verify').then(function (pk) {
 			return Promise.resolve().then(function () {
 				if (isNode) {
-					var verifier	= crypto.createVerify(rsaSign.algorithm);
+					var verifier	= nodeCrypto.createVerify(rsaSign.algorithm);
 					verifier.update(new Buffer(message));
 					return verifier.verify(pk, signature);
 				}
@@ -255,7 +253,7 @@ var rsaSign	= {
 					dataFree(publicKeyBuffer);
 				}
 			}).then(function (isValid) {
-				clearMemory(pk);
+				sodiumUtil.memzero(pk);
 				return isValid;
 			});
 		});

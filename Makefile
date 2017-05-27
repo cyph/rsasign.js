@@ -41,9 +41,12 @@ all:
 		bash -c "emcc -O0 -g4 $$args -o dist/rsasign.debug.js"; \
 	'
 
-	webpack dist/rsasign.js dist/rsasign.js
-	webpack dist/rsasign.debug.js dist/rsasign.debug.js
-	uglifyjs dist/rsasign.js -o dist/rsasign.js
+	sed -i 's|require(|eval("require")(|g' dist/rsasign.js
+	sed -i 's|eval("require")("pem-jwk-norecompute")|require("pem-jwk-norecompute")|g' dist/rsasign.js
+	sed -i 's|eval("require")("sodiumutil")|require("sodiumutil")|g' dist/rsasign.js
+
+	webpack --output-library-target var --output-library rsaSign dist/rsasign.js dist/rsasign.global.js
+	uglifyjs dist/rsasign.global.js -o dist/rsasign.global.js
 
 	rm -rf libsodium node_modules openssl
 

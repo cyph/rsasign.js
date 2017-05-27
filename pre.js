@@ -15,9 +15,10 @@ var sodiumUtil	= require('sodiumutil');
 
 var rsaSign = (function () {
 
+var nodeCrypto, rsaKeygen;
 if (isNode) {
 	self		= this;
 
-	/* Workaround to avoid detection by webpack */
-	rsaKeygen	= eval('require')('rsa-keygen');
+	nodeCrypto	= require('crypto');
+	rsaKeygen	= require('rsa-keygen');
 }
