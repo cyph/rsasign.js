@@ -1,6 +1,6 @@
 all:
 	rm -rf dist libsodium node_modules openssl 2> /dev/null
-	mkdir dist
+	mkdir dist node_modules
 
 	npm install
 
