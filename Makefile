@@ -46,7 +46,7 @@ all:
 	sed -i 's|eval("require")("sodiumutil")|require("sodiumutil")|g' dist/rsasign.module.js
 
 	webpack --output-library-target var --output-library rsaSign dist/rsasign.module.js dist/rsasign.js
-	uglifyjs dist/rsasign.js -o dist/rsasign.js
+	uglifyjs dist/rsasign.js -cmo dist/rsasign.js
 
 	rm -rf libsodium node_modules openssl
 
