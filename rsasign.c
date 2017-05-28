@@ -12,19 +12,19 @@ void rsasignjs_init () {
 	randombytes_stir();
 }
 
-int rsasignjs_public_key_bytes () {
+long rsasignjs_public_key_bytes () {
 	return RSASIGNJS_PUBLEN;
 }
 
-int rsasignjs_secret_key_bytes () {
+long rsasignjs_secret_key_bytes () {
 	return RSASIGNJS_PRIVLEN;
 }
 
-int rsasignjs_signature_bytes () {
+long rsasignjs_signature_bytes () {
 	return RSASIGNJS_SIGLEN;
 }
 
-int rsasignjs_keypair (
+long rsasignjs_keypair (
 	uint8_t* public_key,
 	uint8_t* private_key
 ) {
@@ -46,12 +46,12 @@ int rsasignjs_keypair (
 	return 0;
 }
 
-int rsasignjs_sign (
+long rsasignjs_sign (
 	uint8_t* signature,
 	uint8_t* message,
-	int message_len,
+	long message_len,
 	const uint8_t* private_key,
-	int private_key_len
+	long private_key_len
 ) {
 	RSA* rsa	= RSA_new();
 
@@ -65,7 +65,7 @@ int rsasignjs_sign (
 	SHA256_Update(&sha256, message, message_len);
 	SHA256_Final(hash, &sha256);
 
-	int status	= RSA_sign(
+	long status	= RSA_sign(
 		NID_sha256,
 		hash,
 		SHA256_DIGEST_LENGTH,
@@ -79,12 +79,12 @@ int rsasignjs_sign (
 	return status;
 }
 
-int rsasignjs_verify (
+long rsasignjs_verify (
 	uint8_t* signature,
 	uint8_t* message,
-	int message_len,
+	long message_len,
 	const uint8_t* public_key,
-	int public_key_len
+	long public_key_len
 ) {
 	RSA* rsa	= RSA_new();
 
@@ -98,7 +98,7 @@ int rsasignjs_verify (
 	SHA256_Update(&sha256, message, message_len);
 	SHA256_Final(hash, &sha256);
 
-	int status	= RSA_verify(
+	long status	= RSA_verify(
 		NID_sha256,
 		hash,
 		SHA256_DIGEST_LENGTH,
