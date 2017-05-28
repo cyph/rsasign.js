@@ -266,18 +266,5 @@ var rsaSign	= {
 
 
 
-return rsaSign;
-
-}());
-
-
-if (typeof module !== 'undefined' && module.exports) {
-	rsaSign.rsaSign	= rsaSign;
-	module.exports	= rsaSign;
-}
-else {
-	self.rsaSign	= rsaSign;
-}
-
-
-}());
+rsaSign.rsaSign	= rsaSign;
+module.exports	= rsaSign;
