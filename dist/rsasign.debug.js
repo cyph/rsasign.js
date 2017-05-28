@@ -1,6 +1,3 @@
-(function () {
-
-
 var isNode	=
 	typeof process === 'object' &&
 	typeof require === 'function' &&
@@ -13,12 +10,8 @@ var pemJwk		= require('pem-jwk-norecompute');
 var sodiumUtil	= require('sodiumutil');
 
 
-var rsaSign = (function () {
-
 var nodeCrypto, rsaKeygen;
 if (isNode) {
-	self		= this;
-
 	nodeCrypto	= require('crypto');
 	rsaKeygen	= require('rsa-keygen');
 }
@@ -62212,20 +62205,7 @@ var rsaSign	= {
 
 
 
-return rsaSign;
-
-}());
-
-
-if (typeof module !== 'undefined' && module.exports) {
-	rsaSign.rsaSign	= rsaSign;
-	module.exports	= rsaSign;
-}
-else {
-	self.rsaSign	= rsaSign;
-}
-
-
-}());
+rsaSign.rsaSign	= rsaSign;
+module.exports	= rsaSign;
 
 //# sourceMappingURL=rsasign.debug.js.map
