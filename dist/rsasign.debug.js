@@ -61939,6 +61939,20 @@ run();
 
 ;
 
+function byteArrayIndexOf (arr, n) {
+	if (arr.indexOf) {
+		return arr.indexOf(n);
+	}
+
+	for (var i = 0 ; i < arr.length ; ++i) {
+		if (arr[i] === n) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 function dataResult (buffer, bytes) {
 	return new Uint8Array(
 		new Uint8Array(Module.HEAPU8.buffer, buffer, bytes)
@@ -61954,11 +61968,11 @@ function dataFree (buffer) {
 
 function importJWK (key, purpose) {
 	return Promise.resolve().then(function () {
-		var zeroIndex	= key.indexOf(0);
+		var zeroIndex	= byteArrayIndexOf(key, 0);
 		var jwk			= JSON.parse(
 			sodiumUtil.to_string(
 				zeroIndex > -1 ?
-					new Uint8Array(new Uint8Array(key).buffer, 0, key.indexOf(0)) :
+					new Uint8Array(new Uint8Array(key).buffer, 0, zeroIndex) :
 					new Uint8Array(key)
 			)
 		);
@@ -61967,7 +61981,7 @@ function importJWK (key, purpose) {
 			return crypto.subtle.importKey(
 				'jwk',
 				jwk,
-				rsaSign.algorithm,
+				algorithm,
 				false,
 				[purpose]
 			);
@@ -61986,7 +62000,7 @@ function exportJWK (key, bytes) {
 			return crypto.subtle.exportKey(
 				'jwk',
 				key,
-				rsaSign.algorithm.name
+				algorithm.name
 			);
 		}
 	}).then(function (jwk) {
@@ -61998,23 +62012,36 @@ function exportJWK (key, bytes) {
 	});
 }
 
+function exportKeyPair (keyPair) {
+	return Promise.all([
+		exportJWK(keyPair.publicKey, rsaSign.publicKeyBytes),
+		exportJWK(keyPair.privateKey, rsaSign.privateKeyBytes)
+	]).then(function (results) {
+		return {
+			publicKey: results[0],
+			privateKey: results[1]
+		};
+	});
+}
+
 
 Module._rsasignjs_init();
 
 
-var rsaSign	= {
-	algorithm: isNode ?
-		'RSA-SHA256' :
-		{
-			name: 'RSASSA-PKCS1-v1_5',
-			hash: {
-				name: 'SHA-256'
-			},
-			modulusLength: 2048,
-			publicExponent: new Uint8Array([0x01, 0x00, 0x01])
-		}
-	,
+var algorithm	= isNode ?
+	'RSA-SHA256' :
+	{
+		name: 'RSASSA-PKCS1-v1_5',
+		hash: {
+			name: 'SHA-256'
+		},
+		modulusLength: 2048,
+		publicExponent: new Uint8Array([0x01, 0x00, 0x01])
+	}
+;
 
+
+var rsaSign	= {
 	publicKeyBytes: Module._rsasignjs_public_key_bytes(),
 	privateKeyBytes: Module._rsasignjs_secret_key_bytes(),
 	bytes: Module._rsasignjs_signature_bytes(),
@@ -62031,12 +62058,14 @@ var rsaSign	= {
 			}
 			else {
 				return crypto.subtle.generateKey(
-					rsaSign.algorithm,
+					algorithm,
 					true,
 					['sign', 'verify']
 				);
 			}
-		}).catch(function () {
+		}).then(
+			exportKeyPair
+		).catch(function () {
 			var publicKeyBuffer		= Module._malloc(rsaSign.publicKeyBytes);
 			var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyBytes);
 
@@ -62050,7 +62079,7 @@ var rsaSign	= {
 					throw new Error('RSA Sign error: keyPair failed (' + returnValue + ')');
 				}
 
-				return {
+				return exportKeyPair({
 					publicKey:
 						'-----BEGIN PUBLIC KEY-----\n' +
 						sodiumUtil.to_base64(dataResult(publicKeyBuffer, rsaSign.publicKeyBytes)) +
@@ -62060,22 +62089,12 @@ var rsaSign	= {
 						'-----BEGIN RSA PRIVATE KEY-----\n' +
 						sodiumUtil.to_base64(dataResult(privateKeyBuffer, rsaSign.privateKeyBytes)) +
 						'\n-----END RSA PRIVATE KEY-----'
-				};
+				});
 			}
 			finally {
 				dataFree(publicKeyBuffer, rsaSign.publicKeyBytes);
 				dataFree(privateKeyBuffer, rsaSign.privateKeyBytes);
 			}
-		}).then(function (keyPair) {
-			return Promise.all([
-				exportJWK(keyPair.publicKey, rsaSign.publicKeyBytes),
-				exportJWK(keyPair.privateKey, rsaSign.privateKeyBytes)
-			]);
-		}).then(function (results) {
-			return {
-				publicKey: results[0],
-				privateKey: results[1]
-			};
 		});
 	},
 
@@ -62093,7 +62112,7 @@ var rsaSign	= {
 			return Promise.resolve().then(function () {
 				if (isNode) {
 					var messageBuffer	= new Buffer(message);
-					var signer			= nodeCrypto.createSign(rsaSign.algorithm);
+					var signer			= nodeCrypto.createSign(algorithm);
 					signer.write(messageBuffer);
 					signer.end();
 
@@ -62102,7 +62121,7 @@ var rsaSign	= {
 					return signature;
 				}
 				else {
-					return crypto.subtle.sign(rsaSign.algorithm, sk, message);
+					return crypto.subtle.sign(algorithm, sk, message);
 				}
 			}).catch(function () {
 				sk	= sodiumUtil.from_base64(sk.split('-----')[2]);
@@ -62161,12 +62180,12 @@ var rsaSign	= {
 		return importJWK(publicKey, 'verify').then(function (pk) {
 			return Promise.resolve().then(function () {
 				if (isNode) {
-					var verifier	= nodeCrypto.createVerify(rsaSign.algorithm);
+					var verifier	= nodeCrypto.createVerify(algorithm);
 					verifier.update(new Buffer(message));
 					return verifier.verify(pk, signature);
 				}
 				else {
-					return crypto.subtle.verify(rsaSign.algorithm, pk, signature, message);
+					return crypto.subtle.verify(algorithm, pk, signature, message);
 				}
 			}).catch(function () {
 				pk	= sodiumUtil.from_base64(pk.split('-----')[2]);
