@@ -1,5 +1,19 @@
 ;
 
+function byteArrayIndexOf (arr, n) {
+	if (arr.indexOf) {
+		return arr.indexOf(n);
+	}
+
+	for (var i = 0 ; i < arr.length ; ++i) {
+		if (arr[i] === n) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 function dataResult (buffer, bytes) {
 	return new Uint8Array(
 		new Uint8Array(Module.HEAPU8.buffer, buffer, bytes)
@@ -15,11 +29,11 @@ function dataFree (buffer) {
 
 function importJWK (key, purpose) {
 	return Promise.resolve().then(function () {
-		var zeroIndex	= key.indexOf(0);
+		var zeroIndex	= byteArrayIndexOf(key, 0);
 		var jwk			= JSON.parse(
 			sodiumUtil.to_string(
 				zeroIndex > -1 ?
-					new Uint8Array(new Uint8Array(key).buffer, 0, key.indexOf(0)) :
+					new Uint8Array(new Uint8Array(key).buffer, 0, zeroIndex) :
 					new Uint8Array(key)
 			)
 		);
