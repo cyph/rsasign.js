@@ -1,18 +1,29 @@
 ;
 
-function byteArrayIndexOf (arr, n) {
-	if (arr.indexOf) {
-		return arr.indexOf(n);
-	}
 
-	for (var i = 0 ; i < arr.length ; ++i) {
-		if (arr[i] === n) {
-			return i;
-		}
-	}
+[
+	Float32Array,
+	Float64Array,
+	Int8Array,
+	Int16Array,
+	Int32Array,
+	Uint8Array,
+	Uint16Array,
+	Uint32Array,
+	Uint8ClampedArray
+].forEach(function (TypedArray) {
+	if (!TypedArray.prototype.indexOf) {
+		TypedArray.prototype.indexOf	= function (n) {
+			for (var i = 0 ; i < this.length ; ++i) {
+				if (this[i] === n) {
+					return i;
+				}
+			}
 
-	return -1;
-}
+			return -1;
+		};
+	}
+});
 
 function dataResult (buffer, bytes) {
 	return new Uint8Array(
@@ -29,12 +40,12 @@ function dataFree (buffer) {
 
 function importJWK (key, purpose) {
 	return Promise.resolve().then(function () {
-		var zeroIndex	= byteArrayIndexOf(key, 0);
+		var zeroIndex	= key.indexOf(0);
 		var jwk			= JSON.parse(
 			sodiumUtil.to_string(
 				zeroIndex > -1 ?
-					new Uint8Array(new Uint8Array(key).buffer, 0, zeroIndex) :
-					new Uint8Array(key)
+					new Uint8Array(key.buffer, key.byteOffset, zeroIndex) :
+					key
 			)
 		);
 
@@ -223,8 +234,8 @@ var rsaSign	= {
 
 	open: function (signed, publicKey) {
 		return Promise.resolve().then(function () {
-			var signature	= new Uint8Array(signed.buffer, 0, rsaSign.bytes);
-			var message		= new Uint8Array(signed.buffer, rsaSign.bytes);
+			var signature	= new Uint8Array(signed.buffer, signed.byteOffset, rsaSign.bytes);
+			var message		= new Uint8Array(signed.buffer, signed.byteOffset + rsaSign.bytes);
 
 			return rsaSign.verifyDetached(signature, message, publicKey).then(function (isValid) {
 				if (isValid) {
