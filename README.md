@@ -9,7 +9,7 @@ The platform native RSA implementation (via
 [SubtleCrypto](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto) or the
 [Node.js Crypto API](https://nodejs.org/api/crypto.html)) is preferred where available.
 Otherwise, the OpenSSL implementation compiled to pure JavaScript with
-[Emscripten](https://github.com/kripken/emscripten) is used.
+[Emscripten](https://github.com/kripken/emscripten) is used as a fallback.
 
 ## Example Usage
 

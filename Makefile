@@ -12,7 +12,7 @@ all:
 
 	bash -c ' \
 		args="$$(echo " \
-			--memory-init-file 0 \
+			-s SINGLE_FILE=1 \
 			-DRSASIGNJS_BITS=2048 -DRSASIGNJS_PUBLEN=450 -DRSASIGNJS_PRIVLEN=1700 -DRSASIGNJS_SIGLEN=256 \
 			-s TOTAL_MEMORY=16777216 -s TOTAL_STACK=8388608 \
 			-s NO_DYNAMIC_EXECUTION=1 -s RUNNING_JS_OPTS=1 -s ASSERTIONS=0 \
@@ -38,14 +38,16 @@ all:
 		" | perl -pe "s/\s+/ /g" | perl -pe "s/\[ /\[/g" | perl -pe "s/ \]/\]/g")"; \
 		\
 		bash -c "emcc -Oz $$args -o dist/rsasign.module.js"; \
-		bash -c "emcc -O0 -g4 $$args -o dist/rsasign.debug.js"; \
 	'
 
+	sed -i 's|use asm||g' dist/rsasign.module.js
 	sed -i 's|require(|eval("require")(|g' dist/rsasign.module.js
 	sed -i 's|eval("require")("pem-jwk-norecompute")|require("pem-jwk-norecompute")|g' dist/rsasign.module.js
 	sed -i 's|eval("require")("sodiumutil")|require("sodiumutil")|g' dist/rsasign.module.js
 
 	webpack --output-library-target var --output-library rsaSign dist/rsasign.module.js dist/rsasign.js
+
+	uglifyjs dist/rsasign.module.js -cmo dist/rsasign.module.js
 	uglifyjs dist/rsasign.js -cmo dist/rsasign.js
 
 	rm -rf libsodium node_modules openssl
