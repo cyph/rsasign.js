@@ -12,10 +12,11 @@ all:
 
 	bash -c ' \
 		args="$$(echo " \
+			--closure 1 \
 			-s SINGLE_FILE=1 \
 			-DRSASIGNJS_BITS=2048 -DRSASIGNJS_PUBLEN=450 -DRSASIGNJS_PRIVLEN=1700 -DRSASIGNJS_SIGLEN=256 \
 			-s TOTAL_MEMORY=16777216 -s TOTAL_STACK=8388608 \
-			-s NO_DYNAMIC_EXECUTION=1 -s RUNNING_JS_OPTS=1 -s ASSERTIONS=0 \
+			-s RUNNING_JS_OPTS=1 -s ASSERTIONS=0 \
 			-s AGGRESSIVE_VARIABLE_ELIMINATION=1 -s ALIASING_FUNCTION_POINTERS=1 \
 			-s FUNCTION_POINTER_ALIGNMENT=1 -s DISABLE_EXCEPTION_CATCHING=1 \
 			-s RESERVED_FUNCTION_POINTERS=8 -s NO_FILESYSTEM=1 \
@@ -34,23 +35,26 @@ all:
 				'"'"'_rsasignjs_secret_key_bytes'"'"', \
 				'"'"'_rsasignjs_signature_bytes'"'"' \
 			]\" \
-			--pre-js pre.js --post-js post.js \
 		" | perl -pe "s/\s+/ /g" | perl -pe "s/\[ /\[/g" | perl -pe "s/ \]/\]/g")"; \
 		\
-		bash -c "emcc -Oz $$args -o dist/rsasign.module.js"; \
+		bash -c "emcc -Oz $$args -o dist/rsasign.tmp.js"; \
 	'
+
+	cp pre.js dist/rsasign.module.js
+	cat dist/rsasign.tmp.js >> dist/rsasign.module.js
+	cat post.js >> dist/rsasign.module.js
 
 	sed -i 's|use asm||g' dist/rsasign.module.js
 	sed -i 's|require(|eval("require")(|g' dist/rsasign.module.js
-	sed -i 's|eval("require")("pem-jwk-norecompute")|require("pem-jwk-norecompute")|g' dist/rsasign.module.js
-	sed -i 's|eval("require")("sodiumutil")|require("sodiumutil")|g' dist/rsasign.module.js
+	sed -i 's|eval("require")(.pem-jwk-norecompute.)|require("pem-jwk-norecompute")|g' dist/rsasign.module.js
+	sed -i 's|eval("require")(.sodiumutil.)|require("sodiumutil")|g' dist/rsasign.module.js
 
 	webpack --output-library-target var --output-library rsaSign dist/rsasign.module.js dist/rsasign.js
 
 	uglifyjs dist/rsasign.module.js -cmo dist/rsasign.module.js
 	uglifyjs dist/rsasign.js -cmo dist/rsasign.js
 
-	rm -rf libsodium node_modules openssl
+	rm -rf dist/rsasign.tmp.js libsodium node_modules openssl
 
 clean:
 	rm -rf dist libsodium node_modules openssl

@@ -1,3 +1,5 @@
+var Module	= {};
+
 var isNode	=
 	typeof process === 'object' &&
 	typeof require === 'function' &&

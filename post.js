@@ -25,6 +25,10 @@
 	}
 });
 
+function writeArrayToMemory (array, buffer) {
+	Module.HEAP8.set(array, buffer);
+}
+
 function dataResult (buffer, bytes) {
 	return new Uint8Array(
 		new Uint8Array(Module.HEAPU8.buffer, buffer, bytes)
@@ -202,8 +206,8 @@ var rsaSign	= {
 				var messageBuffer		= Module._malloc(message.length);
 				var privateKeyBuffer	= Module._malloc(sk.length);
 
-				Module.writeArrayToMemory(message, messageBuffer);
-				Module.writeArrayToMemory(sk, privateKeyBuffer);
+				writeArrayToMemory(message, messageBuffer);
+				writeArrayToMemory(sk, privateKeyBuffer);
 
 				try {
 					var returnValue	= Module._rsasignjs_sign(
@@ -266,9 +270,9 @@ var rsaSign	= {
 				var messageBuffer	= Module._malloc(message.length);
 				var publicKeyBuffer	= Module._malloc(pk.length);
 
-				Module.writeArrayToMemory(signature, signatureBuffer);
-				Module.writeArrayToMemory(message, messageBuffer);
-				Module.writeArrayToMemory(pk, publicKeyBuffer);
+				writeArrayToMemory(signature, signatureBuffer);
+				writeArrayToMemory(message, messageBuffer);
+				writeArrayToMemory(pk, publicKeyBuffer);
 
 				try {
 					var returnValue	= Module._rsasignjs_verify(
