@@ -26,6 +26,8 @@ all:
 			$$(find openssl/crypto -type f -name "*.o" -not -path "openssl/crypto/rand/*" | tr "\n" " ") \
 			rsasign.c \
 			-s EXPORTED_FUNCTIONS=\"[ \
+				'"'"'_free'"'"', \
+				'"'"'_malloc'"'"', \
 				'"'"'_rsasignjs_init'"'"', \
 				'"'"'_rsasignjs_keypair'"'"', \
 				'"'"'_rsasignjs_sign'"'"', \
