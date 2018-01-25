@@ -1,5 +1,5 @@
 all:
-	rm -rf dist libsodium node_modules openssl 2> /dev/null
+	rm -rf dist libsodium node_modules openssl package-lock.json 2> /dev/null
 	mkdir dist node_modules
 
 	npm install
@@ -27,6 +27,9 @@ all:
 			openssl/crypto/rand/rand_err.o \
 			$$(find openssl/crypto -type f -name "*.o" -not -path "openssl/crypto/rand/*" | tr "\n" " ") \
 			rsasign.c \
+			-s EXTRA_EXPORTED_RUNTIME_METHODS=\"[ \
+				'"'"'writeArrayToMemory'"'"' \
+			]\" \
 			-s EXPORTED_FUNCTIONS=\"[ \
 				'"'"'_free'"'"', \
 				'"'"'_malloc'"'"', \
@@ -57,7 +60,7 @@ all:
 	uglifyjs dist/rsasign.module.js -cmo dist/rsasign.module.js
 	uglifyjs dist/rsasign.js -cmo dist/rsasign.js
 
-	rm -rf dist/rsasign.tmp.js libsodium node_modules openssl
+	rm -rf dist/rsasign.tmp.js libsodium node_modules openssl package-lock.json
 
 clean:
 	rm -rf dist libsodium node_modules openssl
