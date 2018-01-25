@@ -35,7 +35,9 @@ function dataFree (buffer) {
 	try {
 		Module._free(buffer);
 	}
-	catch (_) {}
+	catch (err) {
+		setTimeout(function () { throw err; }, 0);
+	}
 }
 
 function importJWK (key, purpose) {
