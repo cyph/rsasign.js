@@ -55,7 +55,7 @@ all:
 	sed -i 's|eval("require")(.pem-jwk-norecompute.)|require("pem-jwk-norecompute")|g' dist/rsasign.module.js
 	sed -i 's|eval("require")(.sodiumutil.)|require("sodiumutil")|g' dist/rsasign.module.js
 
-	webpack --output-library-target var --output-library rsaSign dist/rsasign.module.js dist/rsasign.js
+	webpack --mode none --output-library-target var --output-library rsaSign dist/rsasign.module.js -o dist/rsasign.js
 
 	uglifyjs dist/rsasign.module.js -cmo dist/rsasign.module.js
 	uglifyjs dist/rsasign.js -cmo dist/rsasign.js
