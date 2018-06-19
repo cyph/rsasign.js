@@ -43,7 +43,7 @@ all:
 			]\" \
 		" | perl -pe "s/\s+/ /g" | perl -pe "s/\[ /\[/g" | perl -pe "s/ \]/\]/g")"; \
 		\
-		bash -c "emcc -Oz $$args -o dist/rsasign.tmp.js"; \
+		bash -c "emcc -Oz -s WASM=0 $$args -o dist/rsasign.tmp.js"; \
 	'
 
 	cp pre.js dist/rsasign.module.js
