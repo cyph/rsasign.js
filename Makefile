@@ -57,8 +57,8 @@ all:
 
 	webpack --mode none --output-library-target var --output-library rsaSign dist/rsasign.module.js -o dist/rsasign.js
 
-	uglifyjs dist/rsasign.module.js -cmo dist/rsasign.module.js
-	uglifyjs dist/rsasign.js -cmo dist/rsasign.js
+	terser dist/rsasign.module.js -cmo dist/rsasign.module.js
+	terser dist/rsasign.js -cmo dist/rsasign.js
 
 	rm -rf dist/rsasign.tmp.js libsodium node_modules openssl package-lock.json
 
