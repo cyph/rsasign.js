@@ -12,8 +12,8 @@ var pemJwk		= require('pem-jwk-norecompute');
 var sodiumUtil	= require('sodiumutil');
 
 
-var nodeCrypto, rsaKeygen;
+var nodeCrypto, generateRSAKeypair;
 if (isNode) {
-	nodeCrypto	= require('crypto');
-	rsaKeygen	= require('rsa-keygen');
+	nodeCrypto			= require('crypto');
+	generateRSAKeypair	= require('generate-rsa-keypair');
 }

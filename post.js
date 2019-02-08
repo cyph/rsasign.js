@@ -123,11 +123,11 @@ var rsaSign	= {
 	keyPair: function () {
 		return Promise.resolve().then(function () {
 			if (isNode) {
-				var keyPair	= rsaKeygen.generate();
+				var keyPair	= generateRSAKeypair();
 
 				return {
-					publicKey: keyPair.public_key.toString(),
-					privateKey: keyPair.private_key.toString()
+					publicKey: keyPair.public,
+					privateKey: keyPair.private
 				};
 			}
 			else {
