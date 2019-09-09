@@ -17,3 +17,4 @@ if (isNode) {
 	nodeCrypto			= require('crypto');
 	generateRSAKeypair	= require('generate-rsa-keypair');
 }
+else {

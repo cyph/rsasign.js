@@ -1,4 +1,4 @@
-;
+}
 
 
 [
@@ -99,7 +99,9 @@ function exportKeyPair (keyPair) {
 }
 
 
-Module._rsasignjs_init();
+if (!isNode) {
+	Module._rsasignjs_init();
+}
 
 
 var algorithm	= isNode ?
@@ -116,9 +118,9 @@ var algorithm	= isNode ?
 
 
 var rsaSign	= {
-	publicKeyBytes: Module._rsasignjs_public_key_bytes(),
-	privateKeyBytes: Module._rsasignjs_secret_key_bytes(),
-	bytes: Module._rsasignjs_signature_bytes(),
+	publicKeyBytes: RSASIGNJS_PUBLEN,
+	privateKeyBytes: RSASIGNJS_PRIVLEN,
+	bytes: RSASIGNJS_SIGLEN,
 
 	keyPair: function () {
 		return Promise.resolve().then(function () {

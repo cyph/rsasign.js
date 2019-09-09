@@ -1,3 +1,8 @@
+RSASIGNJS_BITS = 2048
+RSASIGNJS_PUBLEN = 450
+RSASIGNJS_PRIVLEN = 1700
+RSASIGNJS_SIGLEN = 256
+
 all:
 	rm -rf dist libsodium node_modules openssl package-lock.json 2> /dev/null
 	mkdir dist node_modules
@@ -14,7 +19,10 @@ all:
 		args="$$(echo " \
 			--memory-init-file 0 \
 			-s SINGLE_FILE=1 \
-			-DRSASIGNJS_BITS=2048 -DRSASIGNJS_PUBLEN=450 -DRSASIGNJS_PRIVLEN=1700 -DRSASIGNJS_SIGLEN=256 \
+			-DRSASIGNJS_BITS=$(RSASIGNJS_BITS) \
+			-DRSASIGNJS_PUBLEN=$(RSASIGNJS_PUBLEN) \
+			-DRSASIGNJS_PRIVLEN=$(RSASIGNJS_PRIVLEN) \
+			-DRSASIGNJS_SIGLEN=$(RSASIGNJS_SIGLEN) \
 			-s TOTAL_MEMORY=16777216 -s TOTAL_STACK=8388608 \
 			-s RUNNING_JS_OPTS=1 \
 			-s ASSERTIONS=0 \
@@ -49,7 +57,11 @@ all:
 
 	cp pre.js dist/rsasign.module.js
 	cat dist/rsasign.tmp.js >> dist/rsasign.module.js
-	cat post.js >> dist/rsasign.module.js
+	cat post.js | \
+		sed "s|RSASIGNJS_PUBLEN|$(RSASIGNJS_PUBLEN)|g" | \
+		sed "s|RSASIGNJS_PRIVLEN|$(RSASIGNJS_PRIVLEN)|g" | \
+		sed "s|RSASIGNJS_SIGLEN|$(RSASIGNJS_SIGLEN)|g" \
+	>> dist/rsasign.module.js
 
 	sed -i 's|use asm||g' dist/rsasign.module.js
 	sed -i 's|require(|eval("require")(|g' dist/rsasign.module.js
