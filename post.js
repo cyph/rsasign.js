@@ -99,11 +99,6 @@ function exportKeyPair (keyPair) {
 }
 
 
-if (!isNode) {
-	Module._rsasignjs_init();
-}
-
-
 var algorithm	= isNode ?
 	'RSA-SHA256' :
 	{
@@ -141,7 +136,7 @@ var rsaSign	= {
 			}
 		}).then(
 			exportKeyPair
-		).catch(function () {
+		).catch(function () { return initiated.then(function () {
 			var publicKeyBuffer		= Module._malloc(rsaSign.publicKeyBytes);
 			var privateKeyBuffer	= Module._malloc(rsaSign.privateKeyBytes);
 
@@ -171,7 +166,7 @@ var rsaSign	= {
 				dataFree(publicKeyBuffer, rsaSign.publicKeyBytes);
 				dataFree(privateKeyBuffer, rsaSign.privateKeyBytes);
 			}
-		});
+		}); });
 	},
 
 	sign: function (message, privateKey) {
@@ -199,7 +194,7 @@ var rsaSign	= {
 				else {
 					return crypto.subtle.sign(algorithm, sk, message);
 				}
-			}).catch(function () {
+			}).catch(function () { return initiated.then(function () {
 				sk	= sodiumUtil.from_base64(sk.split('-----')[2]);
 
 				var signatureBuffer		= Module._malloc(rsaSign.bytes);
@@ -229,7 +224,7 @@ var rsaSign	= {
 					dataFree(messageBuffer);
 					dataFree(privateKeyBuffer);
 				}
-			}).then(function (signature) {
+			}); }).then(function (signature) {
 				sodiumUtil.memzero(sk);
 				return new Uint8Array(signature);
 			});
@@ -263,7 +258,7 @@ var rsaSign	= {
 				else {
 					return crypto.subtle.verify(algorithm, pk, signature, message);
 				}
-			}).catch(function () {
+			}).catch(function () { return initiated.then(function () {
 				pk	= sodiumUtil.from_base64(pk.split('-----')[2]);
 
 				var signatureBuffer	= Module._malloc(rsaSign.bytes);
@@ -290,7 +285,7 @@ var rsaSign	= {
 					dataFree(messageBuffer);
 					dataFree(publicKeyBuffer);
 				}
-			}).then(function (isValid) {
+			}); }).then(function (isValid) {
 				sodiumUtil.memzero(pk);
 				return isValid;
 			});
