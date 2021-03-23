@@ -182,7 +182,7 @@ var rsaSign	= {
 		return importJWK(privateKey, 'sign').then(function (sk) {
 			return Promise.resolve().then(function () {
 				if (isNode) {
-					var messageBuffer	= new Buffer(message);
+					var messageBuffer	= Buffer.from(message);
 					var signer			= nodeCrypto.createSign(algorithm);
 					signer.write(messageBuffer);
 					signer.end();
@@ -252,7 +252,7 @@ var rsaSign	= {
 			return Promise.resolve().then(function () {
 				if (isNode) {
 					var verifier	= nodeCrypto.createVerify(algorithm);
-					verifier.update(new Buffer(message));
+					verifier.update(Buffer.from(message));
 					return verifier.verify(pk, signature);
 				}
 				else {
